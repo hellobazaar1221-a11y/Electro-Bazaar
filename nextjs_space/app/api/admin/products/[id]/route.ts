@@ -9,7 +9,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const data = await req.json();
   const allowed: any = {};
-  const fields = ["name", "description", "price", "originalPrice", "discount", "stock", "brand", "image", "images", "categoryId", "featured", "trending", "isActive"];
+  const fields = ["name", "description", "price", "originalPrice", "discount", "stock", "brand", "image", "images", "categoryId", "featured", "trending", "isActive", "specs"];
   for (const f of fields) {
     if (data[f] !== undefined) {
       if (["price", "originalPrice", "discount", "stock"].includes(f) && data[f] !== null) {

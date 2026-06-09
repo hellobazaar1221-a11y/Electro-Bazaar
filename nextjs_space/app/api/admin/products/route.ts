@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const auth = await requireAdmin();
   if ("error" in auth) return NextResponse.json({ error: auth.error }, { status: auth.status });
   const data = await req.json();
-  const { name, slug: providedSlug, description, price, originalPrice, stock, brand, image, images, categoryId, featured } = data ?? {};
+  const { name, slug: providedSlug, description, price, originalPrice, stock, brand, image, images, categoryId, featured, specs } = data ?? {};
   if (!name || !description || price == null || !image || !categoryId) {
     return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
   }
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
       images: Array.isArray(images) ? images : [image],
       categoryId,
       featured: !!featured,
+      specs: specs ?? {},
     },
   });
   return NextResponse.json(product);

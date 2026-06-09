@@ -39,6 +39,7 @@ export default function ProductsClient() {
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [isDark, setIsDark] = useState(true);
+  const [specRows, setSpecRows] = useState<{ key: string; value: string }[]>([]);
 
   // Bulk Operations State
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -142,6 +143,14 @@ export default function ProductsClient() {
       featured: false,
     });
     setUploadedImages([]);
+    setSpecRows([
+      { key: "Processor", value: "" },
+      { key: "Storage", value: "" },
+      { key: "Battery", value: "" },
+      { key: "Camera", value: "" },
+      { key: "Display", value: "" },
+      { key: "RAM", value: "" },
+    ]);
     setShowModal(true);
   };
 
@@ -160,6 +169,19 @@ export default function ProductsClient() {
       featured: p?.featured ?? false,
     });
     setUploadedImages((p as any)?.images || (p?.image ? [p.image] : []));
+    const existingSpecs = (p as any)?.specs || {};
+    const mapped = Object.entries(existingSpecs).map(([key, value]) => ({
+      key,
+      value: String(value),
+    }));
+    setSpecRows(mapped.length > 0 ? mapped : [
+      { key: "Processor", value: "" },
+      { key: "Storage", value: "" },
+      { key: "Battery", value: "" },
+      { key: "Camera", value: "" },
+      { key: "Display", value: "" },
+      { key: "RAM", value: "" },
+    ]);
     setShowModal(true);
   };
 
@@ -201,6 +223,13 @@ export default function ProductsClient() {
       toast.error("Please upload at least one image");
       return;
     }
+    const specsObj: Record<string, string> = {};
+    specRows.forEach((row) => {
+      if (row.key.trim() && row.value.trim()) {
+        specsObj[row.key.trim()] = row.value.trim();
+      }
+    });
+
     const payload = {
       name: formData?.name,
       slug: formData?.slug || formData?.name?.toLowerCase?.()?.replace?.(/[^a-z0-9]+/g, "-"),
@@ -213,6 +242,7 @@ export default function ProductsClient() {
       images: uploadedImages,
       categoryId: formData?.categoryId,
       featured: formData?.featured,
+      specs: specsObj,
     };
     try {
       const url = editing ? `/api/admin/products/${editing?.id}` : "/api/admin/products";
@@ -914,6 +944,57 @@ export default function ProductsClient() {
                     )}
                   </div>
                 </div>
+                {/* Specifications Section */}
+                <div style={{ borderTop: `1px solid ${tableBorder}`, paddingTop: 16 }}>
+                  <label style={{ display: "block", fontSize: 13, fontWeight: 600, color: textPrimary, marginBottom: 8 }}>
+                    Specifications
+                  </label>
+                  <div className="space-y-2">
+                    {specRows.map((row, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <input
+                          placeholder="Name (e.g., RAM)"
+                          value={row.key}
+                          onChange={(e) => {
+                            const next = [...specRows];
+                            next[index].key = e.target.value;
+                            setSpecRows(next);
+                          }}
+                          style={{ width: "40%", background: inputBg, border: `1px solid ${inputBorder}`, borderRadius: 8, padding: "8px 12px", color: textPrimary, outline: "none" }}
+                        />
+                        <input
+                          placeholder="Value (e.g., 8GB)"
+                          value={row.value}
+                          onChange={(e) => {
+                            const next = [...specRows];
+                            next[index].value = e.target.value;
+                            setSpecRows(next);
+                          }}
+                          style={{ width: "50%", background: inputBg, border: `1px solid ${inputBorder}`, borderRadius: 8, padding: "8px 12px", color: textPrimary, outline: "none" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSpecRows(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          style={{ width: "10%", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, borderRadius: 8, color: "#ef4444" }}
+                          onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(239,68,68,0.1)")}
+                          onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setSpecRows(prev => [...prev, { key: "", value: "" }])}
+                      className="text-xs text-cyan-500 hover:text-cyan-600 font-semibold flex items-center gap-1 mt-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Specification
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-2">
                   <input
                     type="checkbox"
