@@ -18,19 +18,24 @@ try {
   let clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
   let privateKey = process.env.FIREBASE_PRIVATE_KEY;
 
-  // Try loading directly from serviceAccountKey.json file inside the app
-  const serviceAccountPath = path.resolve(process.cwd(), 'serviceAccountKey.json');
-  if (fs.existsSync(serviceAccountPath)) {
-    try {
-      const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-      if (serviceAccount.project_id && serviceAccount.client_email && serviceAccount.private_key) {
-        projectId = serviceAccount.project_id;
-        clientEmail = serviceAccount.client_email;
-        privateKey = serviceAccount.private_key;
-        console.log('📦 Loaded Firebase credentials from local serviceAccountKey.json');
+  // Try loading directly from serviceAccountKey.json file inside the app only if env vars are missing
+  if (!projectId || !clientEmail || !privateKey) {
+    // We construct the filename dynamically to prevent Next.js NFT (Next File Tracer)
+    // from statically tracing and copying serviceAccountKey.json into the build standalone folder.
+    const filenameParts = ['serviceAccountKey', 'json'];
+    const serviceAccountPath = path.resolve(process.cwd(), filenameParts.join('.'));
+    if (fs.existsSync(serviceAccountPath)) {
+      try {
+        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+        if (serviceAccount.project_id && serviceAccount.client_email && serviceAccount.private_key) {
+          projectId = serviceAccount.project_id;
+          clientEmail = serviceAccount.client_email;
+          privateKey = serviceAccount.private_key;
+          console.log('📦 Loaded Firebase credentials from local serviceAccountKey.json');
+        }
+      } catch (e: any) {
+        console.warn('⚠️ Found serviceAccountKey.json but failed to parse:', e.message || e);
       }
-    } catch (e: any) {
-      console.warn('⚠️ Found serviceAccountKey.json but failed to parse:', e.message || e);
     }
   }
 
