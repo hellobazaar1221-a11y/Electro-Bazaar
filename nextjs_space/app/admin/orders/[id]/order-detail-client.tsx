@@ -49,6 +49,44 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
     }
   };
 
+  const handleDownloadInvoice = () => {
+    if (!order?.invoiceUrl) return;
+    try {
+      const url = order.invoiceUrl;
+      const fileName = `invoice-${order.orderNumber || order.id}.pdf`;
+      if (url.startsWith("data:")) {
+        const parts = url.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || "application/pdf";
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      console.error("Failed to download invoice:", err);
+      window.open(order.invoiceUrl, "_blank");
+    }
+  };
+
   useEffect(() => {
     const checkDark = () => {
       const dark =
@@ -267,14 +305,12 @@ export default function OrderDetailClient({ orderId }: { orderId: string }) {
                   <CheckCircle className="w-4 h-4" /> Invoice Uploaded
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  <a
-                    href={order.invoiceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition"
+                  <button
+                    onClick={handleDownloadInvoice}
+                    className="inline-flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition cursor-pointer border-none outline-none"
                   >
                     <Download className="w-3.5 h-3.5" /> Download
-                  </a>
+                  </button>
                   <label className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition cursor-pointer">
                     <Upload className="w-3.5 h-3.5" /> Replace
                     <input

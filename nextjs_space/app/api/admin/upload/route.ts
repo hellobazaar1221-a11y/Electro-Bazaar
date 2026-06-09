@@ -21,13 +21,19 @@ async function uploadToCloudinary(
   // Detect if this is a PDF
   const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
 
-  // Use 'image' resource type for PDFs to support fl_attachment transformation; otherwise use 'auto'
-  const resourceType = isPdf ? "image" : "auto";
+  const base64Data = Buffer.from(fileBytes).toString("base64");
+  const fileDataUri = `data:${mimeType || "application/pdf"};base64,${base64Data}`;
+
+  if (isPdf) {
+    // Return base64 Data URI directly for PDF documents to bypass Cloudinary's default security block on PDF delivery
+    return fileDataUri;
+  }
+
+  const resourceType = "auto";
 
   // Build multipart form data for Cloudinary REST API
   const form = new FormData();
-  const blob = new Blob([fileBytes], { type: mimeType });
-  form.append("file", blob, fileName);
+  form.append("file", fileDataUri);
   form.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
   form.append("api_key", CLOUDINARY_API_KEY);
 
@@ -53,22 +59,7 @@ async function uploadToCloudinary(
   }
 
   const data = await response.json();
-
-  // For PDFs: insert fl_attachment so browser forces a download instead of failing to render
-  // Cloudinary URL: https://res.cloudinary.com/{cloud}/{type}/upload/{public_id}
-  // With flag:     https://res.cloudinary.com/{cloud}/{type}/upload/fl_attachment/{public_id}
-  let url: string = data.secure_url;
-  if (isPdf && url) {
-    if (url.includes("/image/upload/")) {
-      url = url.replace("/image/upload/", "/image/upload/fl_attachment/");
-    } else if (url.includes("/raw/upload/")) {
-      // Do not add fl_attachment since raw resource type doesn't support transformations
-    } else if (url.includes("/upload/")) {
-      url = url.replace("/upload/", "/upload/fl_attachment/");
-    }
-  }
-
-  return url;
+  return data.secure_url;
 }
 
 export async function POST(req: Request) {

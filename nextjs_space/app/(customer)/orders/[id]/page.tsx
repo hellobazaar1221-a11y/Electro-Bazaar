@@ -29,6 +29,44 @@ export default function OrderDetailPage({ params }: { params: any }) {
     fetch(`/api/orders/${id}`).then(r => r.ok ? r.json() : null).then(setOrder).finally(() => setLoading(false));
   }, [id, status]);
 
+  const handleDownloadInvoice = () => {
+    if (!order?.invoiceUrl) return;
+    try {
+      const url = order.invoiceUrl;
+      const fileName = `invoice-${order.orderNumber || order.id}.pdf`;
+      if (url.startsWith("data:")) {
+        const parts = url.split(",");
+        const mime = parts[0].match(/:(.*?);/)?.[1] || "application/pdf";
+        const bstr = atob(parts[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        const blob = new Blob([u8arr], { type: mime });
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      } else {
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    } catch (err) {
+      console.error("Failed to download invoice:", err);
+      window.open(order.invoiceUrl, "_blank");
+    }
+  };
+
   if (status === "loading" || status === "unauthenticated" || loading) return <div className="mx-auto max-w-[1200px] px-4 py-12 text-center text-muted-foreground">Loading order...</div>;
   if (!order) return <div className="mx-auto max-w-[1200px] px-4 py-12 text-center text-muted-foreground">Order not found</div>;
 
@@ -144,15 +182,12 @@ export default function OrderDetailPage({ params }: { params: any }) {
                 <Download className="h-4 w-4" /> Invoice Ready
               </h2>
               <p className="text-xs text-muted-foreground mb-3">Your invoice is ready. Click below to download it.</p>
-              <a
-                href={order.invoiceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                download
-                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm"
+              <button
+                onClick={handleDownloadInvoice}
+                className="flex items-center justify-center gap-2 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm cursor-pointer border-none outline-none"
               >
                 <Download className="h-4 w-4" /> Download Invoice
-              </a>
+              </button>
             </section>
           )}
           <Link href="/products" className="block w-full"><Button variant="outline" className="w-full">Continue Shopping</Button></Link>
