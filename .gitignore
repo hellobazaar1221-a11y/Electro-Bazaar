@@ -1,0 +1,10 @@
+# Root Gitignore
+nextjs_space/serviceAccountKey.json
+serviceAccountKey.json
+nextjs_space/firebase-mock.json
+firebase-mock.json
+.netlify/
+.next/
+node_modules/
+nextjs_space/node_modules/
+nextjs_space/scratch/
