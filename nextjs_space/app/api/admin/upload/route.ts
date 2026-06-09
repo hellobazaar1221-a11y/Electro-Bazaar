@@ -21,8 +21,8 @@ async function uploadToCloudinary(
   // Detect if this is a PDF
   const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
 
-  // Use 'auto' resource type — Cloudinary will detect image vs raw automatically
-  const resourceType = "auto";
+  // Use 'image' resource type for PDFs to support fl_attachment transformation; otherwise use 'auto'
+  const resourceType = isPdf ? "image" : "auto";
 
   // Build multipart form data for Cloudinary REST API
   const form = new FormData();
@@ -58,8 +58,14 @@ async function uploadToCloudinary(
   // Cloudinary URL: https://res.cloudinary.com/{cloud}/{type}/upload/{public_id}
   // With flag:     https://res.cloudinary.com/{cloud}/{type}/upload/fl_attachment/{public_id}
   let url: string = data.secure_url;
-  if (isPdf && url && url.includes("/upload/")) {
-    url = url.replace("/upload/", "/upload/fl_attachment/");
+  if (isPdf && url) {
+    if (url.includes("/image/upload/")) {
+      url = url.replace("/image/upload/", "/image/upload/fl_attachment/");
+    } else if (url.includes("/raw/upload/")) {
+      // Do not add fl_attachment since raw resource type doesn't support transformations
+    } else if (url.includes("/upload/")) {
+      url = url.replace("/upload/", "/upload/fl_attachment/");
+    }
   }
 
   return url;
