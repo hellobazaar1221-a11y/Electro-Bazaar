@@ -53,13 +53,31 @@ export default function OrderDetailPage({ params }: { params: any }) {
         document.body.removeChild(a);
         URL.revokeObjectURL(blobUrl);
       } else {
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.download = fileName;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        fetch(url)
+          .then(r => {
+            if (!r.ok) throw new Error("Fetch failed");
+            return r.blob();
+          })
+          .then(blob => {
+            const blobUrl = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = blobUrl;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(blobUrl);
+          })
+          .catch(fetchErr => {
+            console.warn("Fetch download failed, falling back to direct link:", fetchErr);
+            const a = document.createElement("a");
+            a.href = url;
+            a.target = "_blank";
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          });
       }
     } catch (err) {
       console.error("Failed to download invoice:", err);

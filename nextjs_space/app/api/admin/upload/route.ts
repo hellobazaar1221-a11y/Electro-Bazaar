@@ -21,15 +21,11 @@ async function uploadToCloudinary(
   // Detect if this is a PDF
   const isPdf = mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf");
 
-  const base64Data = Buffer.from(fileBytes).toString("base64");
+  const base64Data = Buffer.from(new Uint8Array(fileBytes)).toString("base64");
   const fileDataUri = `data:${mimeType || "application/pdf"};base64,${base64Data}`;
 
-  if (isPdf) {
-    // Return base64 Data URI directly for PDF documents to bypass Cloudinary's default security block on PDF delivery
-    return fileDataUri;
-  }
-
-  const resourceType = "auto";
+  // Use 'raw' resource type for PDFs to bypass Cloudinary's default security restrictions on PDF deliveries
+  const resourceType = isPdf ? "raw" : "auto";
 
   // Build multipart form data for Cloudinary REST API
   const form = new FormData();
