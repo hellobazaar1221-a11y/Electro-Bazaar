@@ -13,7 +13,7 @@ const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mon
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXTAUTH_URL ?? 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_SITE_URL || 'https://electrobazaars.com'),
   title: 'Electro Bazaar - Premium Electronics Store',
   description: 'Shop the latest smartphones, laptops, TVs and more at Electro Bazaar. Premium electronics at unbeatable prices.',
   icons: { icon: '/favicon.svg', shortcut: '/favicon.svg' },
